@@ -90,7 +90,7 @@ csv(url, (d) => {
 		us_me: d.US_military_effets
 	};
 }).then(function (data) {
-	console.log(data);
+	// console.log(data);
 	// data = _.head(data);
 
 	///////////////////////////////////////////////////////////////////////////

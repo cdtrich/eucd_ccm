@@ -50,6 +50,7 @@ const svg = select("#timeline_usme") // id app
 	.append("svg")
 	.attr("width", width)
 	.attr("height", height)
+	// .attr("viewBox", [-width / 2, -height / 2, width, height])
 	.style("overflow", "visible");
 
 const colorsType = [
@@ -128,8 +129,8 @@ csv(url, (d) => {
 		.map((d) => d.attacker_jurisdiction)
 		.uniq()
 		.value();
-
 	// console.log(dataAttacker);
+
 	const yScale = scaleBand()
 		.domain(dataAttacker)
 		.range([height - margin.bottom, margin.top]);

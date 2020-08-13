@@ -20,7 +20,8 @@ import {
 	timeFormat,
 	scaleOrdinal,
 	line as _line,
-	forceSimulation
+	curveBasis,
+	axisBottom
 } from "d3";
 
 // import _ from "lodash";
@@ -107,18 +108,17 @@ csv(url, (d) => {
 
 	// x - dyad countries
 	//// unique countries
-	const nodes = chain(data)
+	const dataDyad = chain(data)
 		.map((d) => [d.dyad_from, d.dyad_to])
 		.flatten()
 		.uniq()
 		.value();
-	console.log(nodes);
+	console.log(dataDyad);
 
-	const links = data;
-	console.log(links);
-
-	// const links = chain(data).map((d) => [d.dyad_from, d.dyad_to]).value();
-	// console.log(links);
+	const xScale = scaleOrdinal()
+		.domain(dataDyad)
+		.range([margin.left, width - margin.right]);
+	// console.log(xScale.domain(), xScale.range());
 
 	// color - Existence_of_Cyber_Command
 	//// unique types
@@ -136,8 +136,104 @@ csv(url, (d) => {
 	//////////////////////////// plot /////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
 
-	// const links = data.links.map(d => data.create(d));
-	// const nodes = data.nodes.map(d => nodes.create(d));
+	// var link = svg
+	// 	.append("g")
+	// 	.attr("class", "links")
+	// 	.selectAll("path")
+	// 	.data(data)
+	// 	.enter()
+	// 	.append("path")
+	// 	.attr("d", function (d) {
+	// 		return [
+	// 			"M",
+	// 			d.dyad_from,
+	// 			height,
+	// 			"A",
+	// 			(d.dyad_from - d.dyad_to) / 2,
+	// 			",",
+	// 			(d.dyad_from - d.dyad_to) / 2,
+	// 			0,
+	// 			0,
+	// 			",",
+	// 			d.dyad_from < d.dyad_to ? 1 : 0,
+	// 			d.dyad_to,
+	// 			",",
+	// 			height
+	// 		].join(" ");
+	// 	});
+	// .attr('stroke-width', function (d) { return linkWidth(d.chapters.length); })
+	// .on('mouseover', function (d) {
+	//   link.style('stroke', null);
+	//   select(this).style('stroke', '#d62333');
+	// })
+	// .on('mouseout', function (d) {
+	//   link.style('stroke', null);
+	// var node = svg
+	// 	.append("g")
+	// 	.attr("class", "nodes")
+	// 	.selectAll("circle")
+	// 	.data(data)
+	// 	.enter()
+	// 	.append("circle")
+	// 	.attr("cx", function (d) {
+	// 		return d.dyad_from;
+	// 	})
+	// 	.attr("cy", 0);
+	// .attr('r', function (d) { return nodeRadius(d.chapters.length); })
+	// .on('mouseover', function (d) {
+	//   node.style('fill', null);
+	//   d3.select(this).style('fill', 'black');
+	//   var nodesToHighlight = graph.links.map(function (e) { return e.source === d ? e.target : e.target === d ? e.source : 0})
+	//     .filter(function (d) { return d; });
+	//   node.filter(function (d) { return nodesToHighlight.indexOf(d) >= 0; })
+	//     .style('fill', '#555');
+	//   link.style('stroke', function (link_d) {
+	//     return link_d.source === d | link_d.target === d ? '#d62333' : null;
+	//   });
+	// })
+	// .on('mouseout', function (d) {
+	//   node.style('fill', null);
+	//   link.style('stroke', null);
+	// });
+
+	// lines
+	// var line = _line()
+	// 	.curve(curveBasis)
+	// 	.x((d) => xScale(d.dyad_from))
+	// 	.y(0);
+
+	// var linerange = svg
+	// 	.selectAll("path.linerange")
+	// 	.data(data)
+	// 	.enter()
+	// 	.append("g")
+	// 	.attr("class", "linerange");
+
+	// linerange
+	// 	.append("path")
+	// 	.attr("d", function (d) {
+	// 		return line(d.dyad_from);
+	// 	})
+	// 	.attr("id", (d) => d.attacker_jurisdiction);
+
+	// labels
+	// const labels = svg
+	// 	.selectAll("label")
+	// 	.data(data)
+	// 	.enter()
+	// 	.append("text")
+	// 	.classed("label", true)
+	// 	.text((d) => d.name)
+	// 	.attr("x", (d) => xScale(d.dyad_from) + 6)
+	// 	.attr("y", 0);
+
+	var dots = svg
+		.selectAll("dots")
+		.data(data)
+		.enter()
+		.append("circle")
+		.attr("r", 6)
+		.attr("cx", (d) => xScale(d.dyad_from));
 
 	// dots
 	// const dots = svg
@@ -186,4 +282,17 @@ csv(url, (d) => {
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// axes /////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
+
+	// axes
+	const xAxis = axisBottom().scale(xScale);
+	// .tickFormat(d => "$" + parseInt((d + meanBox) / 1000000) + "M"); // parseInt takes off decimals
+
+	// svg
+	// 	.append("g")
+	// 	.classed("x-axis", true)
+	// 	// .attr("transform", `translate(0, ${yScale()})`) // no transformation in x, but in y
+	// 	.attr("transform", "translate(0," + height + ")")
+	// 	// .style("outline-style", "dotted")
+	// 	// .attr("")
+	// 	.call(xAxis);
 });
