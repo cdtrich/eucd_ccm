@@ -2,20 +2,18 @@
 import { csv } from "d3-fetch";
 
 // import _ from "lodash";
-import {
-	filter,
-	chain,
-	find,
-	indexOf,
-	replace,
-	map,
-	concat,
-	flatten
-} from "lodash";
+import { split, replace } from "lodash";
 
 const url =
 	// "https://docs.google.com/spreadsheets/d/e/2PACX-1vS_852u619EmtHZE3p4sq7ZXwfrtxhOc1IlldXIu7z43OFVTtVZ1A577RbfgZEnzVhM_X0rnkGzxytz/pub?gid=0&single=true&output=csv";
-	"data/EUISS Database 2020-08-04 ET.csv";
+	"data/EUISS Database.csv";
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////// to do ////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+// make stuxnet fix dynamic
+// use this file as data file
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// data /////////////////////////////////////////
@@ -25,20 +23,42 @@ csv(url, (d) => {
 	return {
 		id: d.CPI_CODE,
 		name: d.Name,
-		start: new Date(+d.Start_year, +d.Start_month - 1, +d.Start_day),
-		startFix: new Date(
-			+d.Start_year,
-			+d.Start_month - 1,
-			replace(d.Start_day, "unknown", 1)
-		),
-		startLabel: concat(d.Start_day, "-", d.Start_month, "-", d.Start_year),
-		end: new Date(+d.End_year, +d.End_month, +d.end_day),
-		report: new Date(+d.Report_year, +d.Report_month, +d.Report_day),
-		attacker_jurisdiction: d.Attacker_jurisdiction,
-		target_jurisdiction: d.Target_jurisdiction,
-		victim_jurisdiction: d.Victim_jurisdiction,
-		us_me: d.US_military_effets
+		// start: new Date(+d.Start_year, +d.Start_month - 1, +d.Start_day),
+		// startYear: +d.Start_year,
+		// startFix: new Date(
+		// 	+d.Start_year,
+		// 	+d.Start_month - 1,
+		// 	replace(d.Start_day, "unknown", 1)
+		// ),
+		// startLabel: d.Start_day + "-" + d.Start_month + "-" + d.Start_year,
+		// end: new Date(+d.End_year, +d.End_month, +d.end_day),
+		// endYear: +d.End_year,
+		// endFix: new Date(
+		// 	+d.End_year,
+		// 	+d.End_month - 1,
+		// 	replace(d.End_day, "unknown", 1)
+		// ),
+		// endLabel: d.end_day + "-" + d.End_month + "-" + d.End_year,
+		// report: new Date(+d.Report_year, +d.Report_month, +d.Report_day),
+		// attacker_jurisdiction: d.Attacker_jurisdiction,
+		// target_jurisdiction: d.Target_jurisdiction,
+		// victim_jurisdiction: d.Victim_jurisdiction,
+		// dyad_from: split(d.Dyad, "-")[0],
+		// dyad_to: split(d.Dyad, "-")[1],
+		us_me: d.US_military_effets,
+		command: d.Existence_of_Cyber_Command,
+		military: d.Ongoing_military_confrontation
 	};
-}).then(function (data) {
+}).then(function (d) {
+	// var data = forEach(d, function (value, key) {
+	// 	value.startYear = (value.Name === "Stuxnet") ? 2010 : value.startYear;
+	// });
+
+	var data = d;
+	// data.startYear = function(d) {(d.Name === "Stuxnet") ? 2010 : d.startYear};
+
+	// crappy stuxnet fix
+	data[3].startYear = 2010;
+
 	console.log(data);
 });

@@ -66,7 +66,7 @@ const colorsType = [
 
 const url =
 	// "https://docs.google.com/spreadsheets/d/e/2PACX-1vS_852u619EmtHZE3p4sq7ZXwfrtxhOc1IlldXIu7z43OFVTtVZ1A577RbfgZEnzVhM_X0rnkGzxytz/pub?gid=0&single=true&output=csv";
-	"data/EUISS Database 2020-08-04 ET.csv";
+	"data/EUISS Database.csv";
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// data /////////////////////////////////////////
@@ -97,11 +97,14 @@ csv(url, (d) => {
 		attacker_jurisdiction: d.Attacker_jurisdiction,
 		target_jurisdiction: d.Target_jurisdiction,
 		victim_jurisdiction: d.Victim_jurisdiction,
-		us_me: d.US_military_effets
+		us_me: d.US_military_effects
 	};
 }).then(function (data) {
 	// console.log(data);
 	// data = _.head(data);
+
+	// crappy stuxnet fix
+	data[3].startYear = 2010;
 
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// data table ///////////////////////////////////
@@ -198,15 +201,15 @@ csv(url, (d) => {
 		.attr("id", (d) => d.attacker_jurisdiction);
 
 	// labels
-	const labels = svg
-		.selectAll("label")
-		.data(data)
-		.enter()
-		.append("text")
-		.classed("label", true)
-		.text((d) => d.name)
-		.attr("x", (d) => xScale(d.startYear) + 6)
-		.attr("y", (d) => yScale(d.attacker_jurisdiction) + 15);
+	// const labels = svg
+	// 	.selectAll("label")
+	// 	.data(data)
+	// 	.enter()
+	// 	.append("text")
+	// 	.classed("label", true)
+	// 	.text((d) => d.name)
+	// 	.attr("x", (d) => xScale(d.startYear) + 6)
+	// 	.attr("y", (d) => yScale(d.attacker_jurisdiction) + 15);
 
 	// dots
 	const dots = svg

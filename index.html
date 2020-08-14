@@ -22,6 +22,7 @@
 		<script src="https://d3js.org/d3.v5.min.js"></script>
 		<script src="https://d3js.org/d3-fetch.v1.min.js"></script>
 		<script src="https://www.lodash.js"></script>
+		<!-- <script src="./lib/force-chart.js"></script> -->
 
 		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script> -->
 		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
@@ -52,40 +53,50 @@
 		</form> -->
 		<!-- <div class="dropdown"></div> -->
 
-		<h1>Timeline</h1>
 		<p class="story">
 			Since 2007, in more than twenty instances, states or state-sponsored
 			actors have caused damage to other states in politically motivated cyber
 			operations.
 		</p>
-
 		<div id="timeline_general" class="app"></div>
 
 		<p class="story">Effects range from defacement to physical destruction.</p>
-
 		<div id="timeline_usme" class="app"></div>
-
-		<h1>Dyads</h1>
-		<p class="story">Cyber operations follow pre-existing dyads.</p>
-
-		<div id="dyads_general" class="app"></div>
-
-		<p class="story">
-			Most operations are conducted by states that have established a cyber
-			command.
-		</p>
-
-		<h1>Proxies</h1>
-		<p class="story">Many cyber operations are conducted using proxies.</p>
 
 		<h1>Sectors</h1>
 		<p class="story">
 			State-on-state cyber operations impact most the following (CI) sectors
 		</p>
+		<div id="sectors" class="app"></div>
+
+		<h1>Conflicts</h1>
+		<p class="story">
+			…while most are conducted in the absence of a military conflict.
+		</p>
+		<div id="conflicts" class="app"></div>
+
+		<p class="story">
+			Most operations are conducted by states that have established a cyber
+			command.
+		</p>
+		<div id="command" class="app"></div>
+
+		<h1>Dyads</h1>
+		<p class="story">Cyber operations follow pre-existing dyads.</p>
+		<div id="dyads" class="app"></div>
+
+		<h1>Proxies</h1>
+		<p class="story">Many cyber operations are conducted using proxies.</p>
+		<div id="proxies" class="app"></div>
 
 		<!-- <script src="./js/data.js"></script> -->
-		<!-- <script src="./js/1_timeline_general.js"></script>
-		<script src="./js/2_timeline_usme.js"></script> -->
-		<script src="./js/5_dyads.js"></script>
+		<script src="./js/1_timeline_general.js"></script>
+		<script src="./js/2_timeline_usme.js"></script>
+		<script src="./js/3_sectors.js"></script>
+		<script src="./js/4_conflicts.js"></script>
+		<script src="./js/5_command.js"></script>
+		<!-- <script src="./js/6_dyads.js"></script> -->
+		<!-- <script src="./js/7_proxies.js"></script> -->
+		<!-- <script src="./js/8_processes.js"></script> -->
 	</body>
 </html>

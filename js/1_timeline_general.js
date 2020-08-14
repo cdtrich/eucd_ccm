@@ -29,7 +29,7 @@ import {
 
 // import _ from "lodash";
 // Load the core build.
-import { replace, concat } from "lodash";
+import { replace } from "lodash";
 
 // import fetch as d3-fetch from "d3-fetch";
 import { csv } from "d3-fetch";
@@ -39,7 +39,8 @@ import { csv } from "d3-fetch";
 ///////////////////////////////////////////////////////////////////////////
 
 const width = 1200;
-const height = 100;
+const height = 300;
+const radius = 10;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
 const svg = select("#timeline_general") // id app
 	.append("svg")
@@ -56,7 +57,7 @@ const svg = select("#timeline_general") // id app
 
 const url =
 	// "https://docs.google.com/spreadsheets/d/e/2PACX-1vS_852u619EmtHZE3p4sq7ZXwfrtxhOc1IlldXIu7z43OFVTtVZ1A577RbfgZEnzVhM_X0rnkGzxytz/pub?gid=0&single=true&output=csv";
-	"data/EUISS Database 2020-08-04 ET.csv";
+	"data/EUISS Database.csv";
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// data /////////////////////////////////////////
@@ -93,6 +94,9 @@ csv(url, (d) => {
 	// console.log(data);
 	// data = _.head(data);
 
+	// crappy stuxnet fix
+	data[3].startYear = 2010;
+
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// data table ///////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
@@ -124,11 +128,14 @@ csv(url, (d) => {
 			"x",
 			forceX(function (d) {
 				return xScale(d.startYear);
-			}).strength(1)
+			}).strength(0.99)
 		)
-		.force("y", forceY(height / 2))
-		.force("collide", forceCollide(6))
+		.force("y", forceY(height / 2).strength(0.05))
+		.force("collide", forceCollide(radius))
 		.stop();
+	// .alphaDecay(0)
+	// .alpha(0.12)
+	// .on('tick', tick);
 
 	for (var i = 0; i < 10; ++i) simulation.tick();
 
@@ -160,6 +167,13 @@ csv(url, (d) => {
 	// 	.append("g");
 
 	// dots
+
+	function tick() {
+		selectAll(".circ")
+			.attr("cx", (d) => d.x)
+			.attr("cy", (d) => d.y);
+	}
+
 	const dots = svg
 		.selectAll(".dots")
 		.data(data)
@@ -167,8 +181,8 @@ csv(url, (d) => {
 		// cell
 		.append("circle")
 		.attr("class", "dots")
-		.attr("r", 6)
-		.attr("cx", (d) => xScale(d.startYear))
+		.attr("r", radius)
+		.attr("cx", (d) => d.x)
 		.attr("cy", (d) => d.y)
 		// tooltip
 		.on("mouseover", (d, i) => {
