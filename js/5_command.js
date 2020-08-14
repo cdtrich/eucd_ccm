@@ -42,6 +42,7 @@ import { csv } from "d3-fetch";
 
 const width = 1200;
 const height = 300;
+const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
 const svg = select("#command") // id app
 	.append("svg")
@@ -142,24 +143,10 @@ csv(url, (d) => {
 	const colorScale = scaleOrdinal().domain(dataCommand).range(colorsType);
 	// console.log(colorScale.domain(), colorScale.range());
 
-	const yScale = scaleBand()
-		.domain(dataCommand)
-		.range([height - margin.bottom, margin.top]);
-
 	var simulation = forceSimulation(data)
-		.force(
-			"x",
-			forceX(function (d) {
-				return xScale(d.startYear);
-			}).strength(1)
-		)
-		.force(
-			"y",
-			forceY(function (d) {
-				return yScale(d.command);
-			}).strength(0.0001)
-		)
-		.force("collide", forceCollide(6))
+		.force("x", forceX((d) => xScale(d.startYear)).strength(0.99))
+		.force("y", forceY(height).strength(0.05))
+		.force("collide", forceCollide(radius))
 		.stop();
 
 	for (var i = 0; i < 10; ++i) simulation.tick();
@@ -201,11 +188,9 @@ csv(url, (d) => {
 		// cell
 		.append("circle")
 		// .attr("class", "dots")
-		.attr("r", 6)
-		.attr("cx", (d) => xScale(d.startYear))
-		// .attr("cy", (d) => yScale(d.command))
+		.attr("r", radius)
+		.attr("cx", (d) => d.x)
 		.attr("cy", (d) => d.y)
-		// .attr("stroke", (d) => colorScale(d.command))
 		.attr("fill", (d) => colorScale(d.command))
 		// .attr("stroke", "white")
 		// tooltip

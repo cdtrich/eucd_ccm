@@ -2,12 +2,11 @@
 //////////////////////////// to do ////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-// xaxis annual ticks
+// exception for dates with day == "unkown"
 // linerange (d3.line x.begin x.end?!)...
-// labels()
-// hover
 // dropdown selection
 // load data at end as global var after plot function
+// legend
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// dependencies /////////////////////////////////
@@ -17,21 +16,20 @@
 import {
 	select,
 	extent,
-	scaleLinear,
-	// timeFormat,
+	scaleTime,
+	timeFormat,
+	timeYear,
+	scaleBand,
 	scaleOrdinal,
+	line as _line,
+	curveBasis,
 	axisBottom,
-	format,
-	forceSimulation,
-	forceX,
-	forceY,
-	forceRadial,
-	forceCollide
+	axisLeft
 } from "d3";
 
 // import _ from "lodash";
 // Load the core build.
-import { replace, chain } from "lodash";
+import { filter, chain, replace } from "lodash";
 
 // import fetch as d3-fetch from "d3-fetch";
 import { csv } from "d3-fetch";
@@ -42,9 +40,8 @@ import { csv } from "d3-fetch";
 
 const width = 1200;
 const height = 300;
-const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
-const svg = select("#conflicts") // id app
+const svg = select("#timeline_usme") // id app
 	.append("svg")
 	.attr("width", width)
 	.attr("height", height)
@@ -59,16 +56,11 @@ const colorsType = [
 	"#53A2BE"
 ];
 
-// group for voronoi cells
-// var g = svg
-// 	.append("g")
-// 	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
 // const t = d3.transition().duration(1500);
 
 const url =
 	// "https://docs.google.com/spreadsheets/d/e/2PACX-1vS_852u619EmtHZE3p4sq7ZXwfrtxhOc1IlldXIu7z43OFVTtVZ1A577RbfgZEnzVhM_X0rnkGzxytz/pub?gid=0&single=true&output=csv";
-	"data/EUISS Database.csv";
+	"data/EUISS Database 2020-08-04 ET.csv";
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// data /////////////////////////////////////////
@@ -99,135 +91,160 @@ csv(url, (d) => {
 		attacker_jurisdiction: d.Attacker_jurisdiction,
 		target_jurisdiction: d.Target_jurisdiction,
 		victim_jurisdiction: d.Victim_jurisdiction,
-		us_me: d.US_military_effets,
-		military: d.Ongoing_military_confrontation
+		us_me: d.US_military_effets
 	};
 }).then(function (data) {
 	// console.log(data);
 	// data = _.head(data);
 
-	// crappy stuxnet fix
-	data[3].startYear = 2010;
-
-	// sorting to plot the smaller dots last
-	data = data.sort(function (a, b) {
-		if (a.military < b.military) {
-			return -1;
-		}
-		if (a.military > b.military) {
-			return 1;
-		}
-		return 0;
-	});
-
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// data table ///////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
 
+	// d3.select("#output").text(
+	// 	data[0].id + " " + data[0].name + " " + data[0].start
+	// );
+
 	// dropping missing dates (defaults to 1899 otherwise)
 	// data = filter(data, (d) => {
-	// 	return d.end_year > 2000;
+	// 	return d.end > new Date("2000-01-01");
 	// });
 
+	// fixing missing days
+	// dataFix = mapValues(data, function(d, i) {
+	// d.start
+	// });
+	// dataFix = chain(data)
+	// .replace((d) => d.start, "unknown", "01");
+	// var replaceUnknown = function (arr, key, newval) {
+	// 	var match = find(arr, key);
+	// 	if (match) {
+	// 		var index = indexOf(arr, find(arr, key));
+	// 		arr.splice(index, 1, newval);
+	// 	} else {
+	// 		arr.push(newval);
+	// 	}
+	// };
+
+	// data.startFix = replaceUnknown(data.Start_day, "unknown", "01");
+	// console.log(data);
+
+	// 	var data = chain(data)
+	// 	.map(data, function(element) {
+	// 		return _.extend({}, element, {start_fix: 0});
+	// })
+	// 	.map(function(a) {
+	// 		return a.Start_day === "unknown" ? 1;
+	// 	});
+
 	// new time formats for tooltip
-	// var formatDate = timeFormat("%d %b %Y");
+	var formatDate = timeFormat("%d %b %Y");
+	// console.log(data);
 
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// scales ///////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
 
-	const xScale = scaleLinear()
-		.domain(
-			extent(data, (d) => {
-				return d.startYear;
-			})
-		)
-		.range([margin.left, width - margin.right]);
+	// x - dates of attacks
+	const dataDates = chain(data)
+		// pick all date properties
+		.map((d) => [d.start, d.end, d.report])
+		// .pick(d => [d.start, d.end, d.report])
+		// .filter(d => d >= [new Date("2000-01-01")])
+		// .without(d => d < new Date("2000-01-01"))
+		.flatten()
+		.value();
+	// attr("fill", d => (d.type === "summer" ? summer.url() : winter.url()));
 
-	const dataMilitary = chain(data)
-		.map((d) => d.military)
+	// console.log(dataDates);
+
+	const [dateMin, dateMax] = extent(dataDates);
+
+	const xScale = scaleTime()
+		.domain([timeYear.floor(dateMin), timeYear.ceil(dateMax)])
+		.range([margin.left, width - margin.right]);
+	// console.log(xScale.domain(), xScale.range());
+
+	// y - attackers (by jurisdiction)
+	//// unique attackers
+	const dataAttacker = chain(data)
+		.map((d) => d.attacker_jurisdiction)
 		.uniq()
 		.value();
-	// console.log(dataMilitary);
+	// console.log(dataAttacker);
+	const yScale = scaleBand()
+		// .scaleOrdinal()
+		.domain(dataAttacker)
+		.range([height - margin.bottom, margin.top]);
+	// checking whether it computed correctly
+	// console.log(yScale.domain(), yScale.range());
 
-	const sizeScale = scaleOrdinal().domain(dataMilitary).range([5, 10, 20, 40]);
-
-	const colorScale = scaleOrdinal().domain(dataMilitary).range(colorsType);
-
-	// console.log(sizeScale.domain(), sizeScale.range());
-
-	var simulation = forceSimulation(data)
-		// .force(
-		// 	"r",
-		// 	forceRadial(function (d) {
-		// 		return sizeScale(d.military);
-		// 	}).strength(0.001)
-		// )
-		.force("x", forceX((d) => xScale(d.startYear)).strength(0.99))
-		.force("y", forceY(height).strength(0.05))
-		// .force(
-		// 	"collide",
-		// 	forceCollide(d => sizeScale(d.radius)).strength(.05)
-		// )
-		.force("collide", forceCollide(radius))
-		.stop();
-
-	for (var i = 0; i < 10; ++i) simulation.tick();
-
-	console.log(data);
+	// color - types of attacks (US M+D)
+	//// unique types
+	const dataType = chain(data)
+		.map((d) => d.us_me)
+		.uniq()
+		.value();
+	// console.log(dataType);
+	const colorScale = scaleOrdinal().domain(dataType).range(colorsType);
+	// checking whether it computed correctly
+	// console.log(colorScale.domain(), colorScale.range());
 
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// plot /////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
 
-	// voronoi cells for better hover
-	// var cell = g
-	// 	.append("g")
-	// 	.attr("class", "cells")
-	// 	.selectAll("g")
-	// 	.data(
-	// 		d3
-	// 			.voronoi()
-	// 			.extent([
-	// 				[-margin.left, -margin.top],
-	// 				[width + margin.right, height + margin.top]
-	// 			])
-	// 			.x(function (d) {
-	// 				return d.x;
-	// 			})
-	// 			.y(function (d) {
-	// 				return d.y;
-	// 			})
-	// 			.polygons(data)
-	// 	)
-	// 	.enter()
-	// 	.append("g");
+	// lines
+	var line = _line()
+		.curve(curveBasis)
+		.x((d) => xScale(d.start))
+		.y((d) => yScale(d.attacker_jurisdiction));
+
+	var linerange = svg
+		.selectAll("path.linerange")
+		.data(data)
+		.enter()
+		.append("g")
+		.attr("class", "linerange");
+
+	linerange
+		.append("path")
+		.attr("d", function (d) {
+			return line(d.attacker_jurisdiction);
+		})
+		.attr("id", (d) => d.attacker_jurisdiction);
+	// .style("stroke", function(d, i) { return z(i); });
+
+	// labels
+	const labels = svg
+		.selectAll("label")
+		.data(data)
+		.enter()
+		.append("text")
+		.classed("label", true)
+		.text((d) => d.name)
+		.attr("x", (d) => xScale(d.start) + 6)
+		.attr("y", (d) => yScale(d.attacker_jurisdiction) + 15);
 
 	// dots
 	const dots = svg
-		.selectAll(".dots")
+		.selectAll("dots")
 		.data(data)
 		.enter()
-		// cell
 		.append("circle")
-		// .attr("class", "dots")
-		// .attr("r", (d) => d.military)
-		.attr("r", radius)
-		.attr("cx", (d) => d.x)
-		.attr("cy", (d) => d.y)
-		.attr("fill", (d) => colorScale(d.military))
-		// .attr("fill", (d) => colorScale(d.us_me))
-		// .attr("stroke", "white")
+		.attr("r", 6)
+		.attr("cx", (d) => xScale(d.start))
+		.attr("cy", (d) => yScale(d.attacker_jurisdiction) + 12)
+		.attr("fill", (d) => colorScale(d.us_me))
 		// tooltip
 		.on("mouseover", (d, i) => {
 			const mouseX = event.pageX;
 			const mouseY = event.pageY;
+			// make dots outline?
+			// select("circle").attr("r", 12);
 			select(".tooltip")
-				.style("left", mouseX + "px")
-				.style("top", mouseY - 28 + "px")
-				.style("opacity", 0)
-				.transition()
-				.duration(100)
+				// .transition()
+				// .duration(100)
 				.style("visibility", "visible")
 				.style("opacity", 1)
 				.style("left", mouseX + "px")
@@ -237,7 +254,7 @@ csv(url, (d) => {
 			select(".tooltip h2").text(d.name);
 			// date
 			select(".tooltip .date").text(
-				"from " + d.startLabel + " to " + d.endLabel
+				"from " + formatDate(d.start) + " to " + formatDate(d.end)
 			);
 			// name
 			select(".tooltip .type").text("type: " + d.us_me);
@@ -247,7 +264,10 @@ csv(url, (d) => {
 			select(".tooltip .target").text("target: " + d.name);
 		})
 		.on("mouseout", function (d) {
-			select(".tooltip").style("visibility", "hidden");
+			select(".tooltip")
+				// .transition()
+				// .duration(500)
+				.style("visibility", "hidden");
 		});
 
 	///////////////////////////////////////////////////////////////////////////
@@ -255,13 +275,23 @@ csv(url, (d) => {
 	///////////////////////////////////////////////////////////////////////////
 
 	// axes
-	var formatAxis = format(".4r");
-
-	const xAxis = axisBottom().scale(xScale).tickFormat(formatAxis);
+	const xAxis = axisBottom().scale(xScale);
+	const yAxis = axisLeft().scale(yScale);
+	// .tickFormat(d => "$" + parseInt((d + meanBox) / 1000000) + "M"); // parseInt takes off decimals
 
 	svg
 		.append("g")
 		.classed("x-axis", true)
+		// .attr("transform", `translate(0, ${yScale()})`) // no transformation in x, but in y
 		.attr("transform", "translate(0," + height + ")")
+		// .style("outline-style", "dotted")
+		// .attr("")
 		.call(xAxis);
+	svg
+		.append("g")
+		.classed("y-axis", true)
+		.attr("transform", `translate(${margin.left}, 0)`) // no transformation in x, but in y
+		.call(yAxis)
+		.select(".domain") // axis line is classed as .domain by default (check html); created by .call() above, .remove() after will drop it
+		.remove();
 });

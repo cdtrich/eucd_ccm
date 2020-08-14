@@ -40,7 +40,7 @@ import { csv } from "d3-fetch";
 
 const width = 1200;
 const height = 300;
-const radius = 10;
+const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
 const svg = select("#timeline_general") // id app
 	.append("svg")
@@ -130,9 +130,10 @@ csv(url, (d) => {
 				return xScale(d.startYear);
 			}).strength(0.99)
 		)
-		.force("y", forceY(height / 2).strength(0.05))
+		.force("y", forceY(height).strength(0.05))
 		.force("collide", forceCollide(radius))
 		.stop();
+	// this crashes
 	// .alphaDecay(0)
 	// .alpha(0.12)
 	// .on('tick', tick);
@@ -166,13 +167,14 @@ csv(url, (d) => {
 	// 	.enter()
 	// 	.append("g");
 
-	// dots
+	// bouncy dots from here https://bl.ocks.org/maegul/7d8e7342c649fdc077a6984e52da4b62
+	// function tick() {
+	// 	selectAll(".dots")
+	// 		.attr("cx", (d) => d.x)
+	// 		.attr("cy", (d) => d.y);
+	// };
 
-	function tick() {
-		selectAll(".circ")
-			.attr("cx", (d) => d.x)
-			.attr("cy", (d) => d.y);
-	}
+	// dots
 
 	const dots = svg
 		.selectAll(".dots")
