@@ -46,8 +46,9 @@ const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
 const svg = select("#command") // id app
 	.append("svg")
-	.attr("width", width)
-	.attr("height", height)
+	// .attr("width", width)
+	// .attr("height", height)
+	.attr("viewBox", [0, 0, width, height])
 	.style("overflow", "visible");
 
 const colorsType = [
@@ -143,6 +144,7 @@ csv(url, (d) => {
 	const colorScale = scaleOrdinal().domain(dataCommand).range(colorsType);
 	// console.log(colorScale.domain(), colorScale.range());
 
+	// can these be clustered? https://bl.ocks.org/mbostock/1748247
 	var simulation = forceSimulation(data)
 		.force("x", forceX((d) => xScale(d.startYear)).strength(0.99))
 		.force("y", forceY(height).strength(0.05))

@@ -2,11 +2,7 @@
 //////////////////////////// to do ////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-// xaxis annual ticks
-// linerange (d3.line x.begin x.end?!)...
-// labels()
-// hover
-// dropdown selection
+// this layout would be lovely https://observablehq.com/@tomwhite/beeswarm-bubbles
 // load data at end as global var after plot function
 
 ///////////////////////////////////////////////////////////////////////////
@@ -46,8 +42,9 @@ const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
 const svg = select("#conflicts") // id app
 	.append("svg")
-	.attr("width", width)
-	.attr("height", height)
+	// .attr("width", width)
+	// .attr("height", height)
+	.attr("viewBox", [0, 0, width, height])
 	.style("overflow", "visible");
 
 const colorsType = [
@@ -150,7 +147,7 @@ csv(url, (d) => {
 		.value();
 	// console.log(dataMilitary);
 
-	const sizeScale = scaleOrdinal().domain(dataMilitary).range([5, 10, 20, 40]);
+	const sizeScale = scaleOrdinal().domain(dataMilitary).range([10, 15, 20, 25]);
 
 	const colorScale = scaleOrdinal().domain(dataMilitary).range(colorsType);
 
@@ -168,6 +165,10 @@ csv(url, (d) => {
 		// .force(
 		// 	"collide",
 		// 	forceCollide(d => sizeScale(d.radius)).strength(.05)
+		// )
+		// .force(
+		// 	"collision",
+		// 	forceCollide().radius((d) => d.radius)
 		// )
 		.force("collide", forceCollide(radius))
 		.stop();
@@ -212,12 +213,12 @@ csv(url, (d) => {
 		.append("circle")
 		// .attr("class", "dots")
 		// .attr("r", (d) => d.military)
-		.attr("r", radius)
+		.attr("r", (d) => sizeScale(d.military))
 		.attr("cx", (d) => d.x)
 		.attr("cy", (d) => d.y)
 		.attr("fill", (d) => colorScale(d.military))
 		// .attr("fill", (d) => colorScale(d.us_me))
-		// .attr("stroke", "white")
+		.attr("stroke", "white")
 		// tooltip
 		.on("mouseover", (d, i) => {
 			const mouseX = event.pageX;

@@ -49,8 +49,9 @@ const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
 const svg = select("#timeline_usme") // id app
 	.append("svg")
-	.attr("width", width)
-	.attr("height", height)
+	// .attr("width", width)
+	// .attr("height", height)
+	.attr("viewBox", [0, 0, width, height])
 	// .attr("viewBox", [-width / 2, -height / 2, width, height])
 	.style("overflow", "visible");
 
@@ -218,6 +219,7 @@ csv(url, (d) => {
 		.data(data)
 		.enter()
 		.append("circle")
+		// .attr("class", "dots")
 		.attr("r", radius)
 		.attr("cx", (d) => d.x)
 		// y position needs some adjusting. why???

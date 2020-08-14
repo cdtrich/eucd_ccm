@@ -42,10 +42,13 @@ const width = 1200;
 const height = 300;
 const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
+// const svg = d3.create("svg")
+// .attr("viewBox", [0, 0, width, height]);
 const svg = select("#timeline_general") // id app
 	.append("svg")
-	.attr("width", width)
-	.attr("height", height)
+	// .attr("width", width)
+	// .attr("height", height)
+	.attr("viewBox", [0, 0, width, height])
 	.style("overflow", "visible");
 
 // group for voronoi cells
