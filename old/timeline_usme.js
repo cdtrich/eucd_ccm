@@ -2,11 +2,11 @@
 //////////////////////////// to do ////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-// binned beeswarm https://bl.ocks.org/Kcnarf/277bf4ac0c5a91a0be08be5dc23115c7
-// legend
+// exception for dates with day == "unkown"
 // linerange (d3.line x.begin x.end?!)...
 // dropdown selection
 // load data at end as global var after plot function
+// legend
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// dependencies /////////////////////////////////
@@ -16,7 +16,7 @@
 import {
 	select,
 	extent,
-	scaleLinear,
+	scaleTime,
 	timeFormat,
 	timeYear,
 	scaleBand,
@@ -24,12 +24,7 @@ import {
 	line as _line,
 	curveBasis,
 	axisBottom,
-	axisLeft,
-	format,
-	forceSimulation,
-	forceX,
-	forceY,
-	forceCollide
+	axisLeft
 } from "d3";
 
 // import _ from "lodash";
@@ -45,14 +40,11 @@ import { csv } from "d3-fetch";
 
 const width = 1200;
 const height = 300;
-const radius = 15;
 const margin = { top: 20, right: 20, bottom: 20, left: 120 };
 const svg = select("#timeline_usme") // id app
 	.append("svg")
-	// .attr("width", width)
-	// .attr("height", height)
-	.attr("viewBox", [0, 0, width, height])
-	// .attr("viewBox", [-width / 2, -height / 2, width, height])
+	.attr("width", width)
+	.attr("height", height)
 	.style("overflow", "visible");
 
 const colorsType = [
@@ -68,7 +60,7 @@ const colorsType = [
 
 const url =
 	// "https://docs.google.com/spreadsheets/d/e/2PACX-1vS_852u619EmtHZE3p4sq7ZXwfrtxhOc1IlldXIu7z43OFVTtVZ1A577RbfgZEnzVhM_X0rnkGzxytz/pub?gid=0&single=true&output=csv";
-	"data/EUISS Database.csv";
+	"data/EUISS Database 2020-08-04 ET.csv";
 
 ///////////////////////////////////////////////////////////////////////////
 //////////////////////////// data /////////////////////////////////////////
@@ -99,18 +91,51 @@ csv(url, (d) => {
 		attacker_jurisdiction: d.Attacker_jurisdiction,
 		target_jurisdiction: d.Target_jurisdiction,
 		victim_jurisdiction: d.Victim_jurisdiction,
-		us_me: d.US_military_effects
+		us_me: d.US_military_effets
 	};
 }).then(function (data) {
 	// console.log(data);
 	// data = _.head(data);
 
-	// crappy stuxnet fix
-	data[3].startYear = 2010;
-
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// data table ///////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
+
+	// d3.select("#output").text(
+	// 	data[0].id + " " + data[0].name + " " + data[0].start
+	// );
+
+	// dropping missing dates (defaults to 1899 otherwise)
+	// data = filter(data, (d) => {
+	// 	return d.end > new Date("2000-01-01");
+	// });
+
+	// fixing missing days
+	// dataFix = mapValues(data, function(d, i) {
+	// d.start
+	// });
+	// dataFix = chain(data)
+	// .replace((d) => d.start, "unknown", "01");
+	// var replaceUnknown = function (arr, key, newval) {
+	// 	var match = find(arr, key);
+	// 	if (match) {
+	// 		var index = indexOf(arr, find(arr, key));
+	// 		arr.splice(index, 1, newval);
+	// 	} else {
+	// 		arr.push(newval);
+	// 	}
+	// };
+
+	// data.startFix = replaceUnknown(data.Start_day, "unknown", "01");
+	// console.log(data);
+
+	// 	var data = chain(data)
+	// 	.map(data, function(element) {
+	// 		return _.extend({}, element, {start_fix: 0});
+	// })
+	// 	.map(function(a) {
+	// 		return a.Start_day === "unknown" ? 1;
+	// 	});
 
 	// new time formats for tooltip
 	var formatDate = timeFormat("%d %b %Y");
@@ -120,13 +145,25 @@ csv(url, (d) => {
 	//////////////////////////// scales ///////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
 
-	const xScale = scaleLinear()
-		.domain(
-			extent(data, (d) => {
-				return d.startYear;
-			})
-		)
+	// x - dates of attacks
+	const dataDates = chain(data)
+		// pick all date properties
+		.map((d) => [d.start, d.end, d.report])
+		// .pick(d => [d.start, d.end, d.report])
+		// .filter(d => d >= [new Date("2000-01-01")])
+		// .without(d => d < new Date("2000-01-01"))
+		.flatten()
+		.value();
+	// attr("fill", d => (d.type === "summer" ? summer.url() : winter.url()));
+
+	// console.log(dataDates);
+
+	const [dateMin, dateMax] = extent(dataDates);
+
+	const xScale = scaleTime()
+		.domain([timeYear.floor(dateMin), timeYear.ceil(dateMax)])
 		.range([margin.left, width - margin.right]);
+	// console.log(xScale.domain(), xScale.range());
 
 	// y - attackers (by jurisdiction)
 	//// unique attackers
@@ -135,34 +172,10 @@ csv(url, (d) => {
 		.uniq()
 		.value();
 	// console.log(dataAttacker);
-
 	const yScale = scaleBand()
+		// .scaleOrdinal()
 		.domain(dataAttacker)
 		.range([height - margin.bottom, margin.top]);
-
-	var simulation = forceSimulation(data)
-		.force(
-			"x",
-			forceX(function (d) {
-				return xScale(d.startYear);
-			}).strength(0.935)
-		)
-		.force(
-			"y",
-			forceY(function (d) {
-				return yScale(d.attacker_jurisdiction);
-			}).strength(0.99)
-		)
-		.force("collide", forceCollide(radius))
-		.stop();
-
-	for (var i = 0; i < 10; ++i) simulation.tick();
-
-	// fix y-coordinate for exact data-based encoding/positioning
-	data.forEach(function (d) {
-		d.fy = yScale(d.attacker_jurisdiction);
-	});
-
 	// checking whether it computed correctly
 	// console.log(yScale.domain(), yScale.range());
 
@@ -173,7 +186,6 @@ csv(url, (d) => {
 		.uniq()
 		.value();
 	// console.log(dataType);
-
 	const colorScale = scaleOrdinal().domain(dataType).range(colorsType);
 	// checking whether it computed correctly
 	// console.log(colorScale.domain(), colorScale.range());
@@ -183,35 +195,36 @@ csv(url, (d) => {
 	///////////////////////////////////////////////////////////////////////////
 
 	// lines
-	// var line = _line()
-	// 	.curve(curveBasis)
-	// 	.x((d) => xScale(d.startYear))
-	// 	.y((d) => yScale(d.attacker_jurisdiction));
+	var line = _line()
+		.curve(curveBasis)
+		.x((d) => xScale(d.start))
+		.y((d) => yScale(d.attacker_jurisdiction));
 
-	// var linerange = svg
-	// 	.selectAll("path.linerange")
-	// 	.data(data)
-	// 	.enter()
-	// 	.append("g")
-	// 	.attr("class", "linerange");
+	var linerange = svg
+		.selectAll("path.linerange")
+		.data(data)
+		.enter()
+		.append("g")
+		.attr("class", "linerange");
 
-	// linerange
-	// 	.append("path")
-	// 	.attr("d", function (d) {
-	// 		return line(d.attacker_jurisdiction);
-	// 	})
-	// 	.attr("id", (d) => d.attacker_jurisdiction);
+	linerange
+		.append("path")
+		.attr("d", function (d) {
+			return line(d.attacker_jurisdiction);
+		})
+		.attr("id", (d) => d.attacker_jurisdiction);
+	// .style("stroke", function(d, i) { return z(i); });
 
 	// labels
-	// const labels = svg
-	// 	.selectAll("label")
-	// 	.data(data)
-	// 	.enter()
-	// 	.append("text")
-	// 	.classed("label", true)
-	// 	.text((d) => d.name)
-	// 	.attr("x", (d) => xScale(d.startYear) + radius)
-	// 	.attr("y", (d) => yScale(d.attacker_jurisdiction) + 15);
+	const labels = svg
+		.selectAll("label")
+		.data(data)
+		.enter()
+		.append("text")
+		.classed("label", true)
+		.text((d) => d.name)
+		.attr("x", (d) => xScale(d.start) + 6)
+		.attr("y", (d) => yScale(d.attacker_jurisdiction) + 15);
 
 	// dots
 	const dots = svg
@@ -219,22 +232,19 @@ csv(url, (d) => {
 		.data(data)
 		.enter()
 		.append("circle")
-		.attr("class", "dots")
-		.attr("r", radius)
-		.attr("cx", (d) => d.x)
-		// y position needs some adjusting. why???
-		.attr("cy", (d) => d.y + 20)
+		.attr("r", 6)
+		.attr("cx", (d) => xScale(d.start))
+		.attr("cy", (d) => yScale(d.attacker_jurisdiction) + 12)
 		.attr("fill", (d) => colorScale(d.us_me))
 		// tooltip
 		.on("mouseover", (d, i) => {
 			const mouseX = event.pageX;
 			const mouseY = event.pageY;
+			// make dots outline?
+			// select("circle").attr("r", 12);
 			select(".tooltip")
-				.style("left", mouseX + "px")
-				.style("top", mouseY - 28 + "px")
-				.style("opacity", 0)
-				.transition()
-				.duration(100)
+				// .transition()
+				// .duration(100)
 				.style("visibility", "visible")
 				.style("opacity", 1)
 				.style("left", mouseX + "px")
@@ -244,7 +254,7 @@ csv(url, (d) => {
 			select(".tooltip h2").text(d.name);
 			// date
 			select(".tooltip .date").text(
-				"from " + d.startLabel + " to " + d.endLabel
+				"from " + formatDate(d.start) + " to " + formatDate(d.end)
 			);
 			// name
 			select(".tooltip .type").text("type: " + d.us_me);
@@ -254,25 +264,29 @@ csv(url, (d) => {
 			select(".tooltip .target").text("target: " + d.name);
 		})
 		.on("mouseout", function (d) {
-			select(".tooltip").style("visibility", "hidden");
+			select(".tooltip")
+				// .transition()
+				// .duration(500)
+				.style("visibility", "hidden");
 		});
 
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// axes /////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////
 
-	var formatAxis = format(".4r");
-
 	// axes
-	const xAxis = axisBottom().scale(xScale).tickFormat(formatAxis);
-	const yAxis = axisLeft().scale(yScale).tickSize(-width, width);
+	const xAxis = axisBottom().scale(xScale);
+	const yAxis = axisLeft().scale(yScale);
+	// .tickFormat(d => "$" + parseInt((d + meanBox) / 1000000) + "M"); // parseInt takes off decimals
 
 	svg
 		.append("g")
 		.classed("x-axis", true)
+		// .attr("transform", `translate(0, ${yScale()})`) // no transformation in x, but in y
 		.attr("transform", "translate(0," + height + ")")
+		// .style("outline-style", "dotted")
+		// .attr("")
 		.call(xAxis);
-
 	svg
 		.append("g")
 		.classed("y-axis", true)

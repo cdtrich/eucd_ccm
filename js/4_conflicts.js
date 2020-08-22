@@ -19,9 +19,10 @@ import {
 	axisBottom,
 	format,
 	forceSimulation,
+	forceManyBody,
 	forceX,
 	forceY,
-	forceRadial,
+	// forceRadial,
 	forceCollide
 } from "d3";
 
@@ -147,7 +148,7 @@ csv(url, (d) => {
 		.value();
 	// console.log(dataMilitary);
 
-	const sizeScale = scaleOrdinal().domain(dataMilitary).range([10, 15, 20, 25]);
+	const sizeScale = scaleOrdinal().domain(dataMilitary).range([28, 21, 14, 7]);
 
 	const colorScale = scaleOrdinal().domain(dataMilitary).range(colorsType);
 
@@ -160,22 +161,21 @@ csv(url, (d) => {
 		// 		return sizeScale(d.military);
 		// 	}).strength(0.001)
 		// )
+		.force("charge", forceManyBody().strength(0.05))
 		.force("x", forceX((d) => xScale(d.startYear)).strength(0.99))
 		.force("y", forceY(height).strength(0.05))
 		// .force(
 		// 	"collide",
 		// 	forceCollide(d => sizeScale(d.radius)).strength(.05)
 		// )
-		// .force(
-		// 	"collision",
-		// 	forceCollide().radius((d) => d.radius)
-		// )
-		.force("collide", forceCollide(radius))
+		.force("collide", forceCollide(radius * 1.5))
+		// .force("collide", forceCollide(radius))
+		// .alphaTarget(.05)
 		.stop();
 
 	for (var i = 0; i < 10; ++i) simulation.tick();
 
-	console.log(data);
+	// console.log(data);
 
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////// plot /////////////////////////////////////////
@@ -211,7 +211,7 @@ csv(url, (d) => {
 		.enter()
 		// cell
 		.append("circle")
-		// .attr("class", "dots")
+		.attr("class", "dots")
 		// .attr("r", (d) => d.military)
 		.attr("r", (d) => sizeScale(d.military))
 		.attr("cx", (d) => d.x)

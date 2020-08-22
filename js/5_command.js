@@ -20,7 +20,7 @@ import {
 	scaleLinear,
 	// timeFormat,
 	scaleOrdinal,
-	scaleBand,
+	// scaleBand,
 	axisBottom,
 	format,
 	forceSimulation,
@@ -105,7 +105,7 @@ csv(url, (d) => {
 		command: d.Existence_of_Cyber_Command.trim()
 	};
 }).then(function (data) {
-	console.log(data);
+	// console.log(data);
 	// data = _.head(data);
 
 	// crappy stuxnet fix
@@ -189,7 +189,7 @@ csv(url, (d) => {
 		.enter()
 		// cell
 		.append("circle")
-		// .attr("class", "dots")
+		.attr("class", "dots")
 		.attr("r", radius)
 		.attr("cx", (d) => d.x)
 		.attr("cy", (d) => d.y)
